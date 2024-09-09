@@ -57,7 +57,7 @@ public class PermissionHandler {
 
     public boolean isAllowed(String resource, String operation){
         Operation op = Operation.valueOf(operation);
-        boolean isResourceAllowed = !deniedOperations.get(resource).contains(op);
+        boolean isResourceAllowed = !deniedOperations.containsKey(resource) || !deniedOperations.get(resource).contains(op);
         boolean areAllResourcesAllowed = !deniedOperations.get("*").contains(op);
         return isResourceAllowed && areAllResourcesAllowed;
     }
