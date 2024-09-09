@@ -3,7 +3,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class PermissionHandler {
-    Map<String, EnumSet<Operation>> deniedOperations;
+    private Map<String, EnumSet<Operation>> deniedOperations;
 
     public PermissionHandler() {
         clearPermissions();
@@ -24,7 +24,7 @@ public class PermissionHandler {
         }
     }
 
-    public void allowPermission(String resource, String operation){
+    private void allowPermission(String resource, String operation){
         if (operation.equals("*")){
             deniedOperations.get(resource).clear();
             return;
@@ -34,7 +34,7 @@ public class PermissionHandler {
         deniedOperations.get(resource).remove(op);
     }
 
-    public void denyPermission(String resource, String operation){
+    private void denyPermission(String resource, String operation){
         EnumSet<Operation> toAdd = EnumSet.noneOf(Operation.class);
         if (operation.equals("*")){
             toAdd.addAll(EnumSet.allOf(Operation.class));
@@ -50,14 +50,15 @@ public class PermissionHandler {
         deniedOperations.put(resource, toAdd);
     }
 
-    public void clearPermissions() {
+    private void clearPermissions() {
         this.deniedOperations = new HashMap<>();
         deniedOperations.put("*", EnumSet.noneOf(Operation.class));
     }
 
-    public boolean isAllowed(String resource, Operation operation){
-        boolean isResourceAllowed = !deniedOperations.get(resource).contains(operation);
-        boolean areAllResourcesAllowed = !deniedOperations.get("*").contains(operation);
+    public boolean isAllowed(String resource, String operation){
+        Operation op = Operation.valueOf(operation);
+        boolean isResourceAllowed = !deniedOperations.get(resource).contains(op);
+        boolean areAllResourcesAllowed = !deniedOperations.get("*").contains(op);
         return isResourceAllowed && areAllResourcesAllowed;
     }
 
@@ -65,7 +66,10 @@ public class PermissionHandler {
         EnumSet<Operation> allowed = EnumSet.allOf(Operation.class);
         EnumSet<Operation> denied = EnumSet.noneOf(Operation.class);
         denied.addAll(deniedOperations.get("*"));
-        denied.addAll(deniedOperations.get(resource));
+        if (deniedOperations.containsKey(resource)){
+            denied.addAll(deniedOperations.get(resource));
+        }
+
         allowed.removeAll(denied);
         return String.format("%s resource is allowed to do the following operations: %s",resource,allowed);
     }
