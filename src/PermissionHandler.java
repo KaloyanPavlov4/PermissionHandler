@@ -45,7 +45,14 @@ public class PermissionHandler {
         }
 
         Operation op = Operation.valueOf(operation.toUpperCase());
-        deniedOperations.get(resource).remove(op);
+        if (deniedOperations.containsKey(resource)){
+            deniedOperations.get(resource).remove(op);
+        }else {
+            EnumSet<Operation> key = EnumSet.copyOf(deniedOperations.get("*"));
+            key.remove(op);
+            deniedOperations.put(resource, key);
+        }
+
     }
 
     private void denyPermission(String resource, String operation){
@@ -54,6 +61,10 @@ public class PermissionHandler {
             toAdd.addAll(EnumSet.allOf(Operation.class));
         } else {
             toAdd.add(Operation.valueOf(operation.toUpperCase()));
+        }
+
+        if(resource.equals("*")){
+            deniedOperations.forEach((key, set) -> set.addAll(toAdd));
         }
 
         if (deniedOperations.containsKey(resource)) {
@@ -71,18 +82,18 @@ public class PermissionHandler {
 
     public boolean isAllowed(String resource, String operation){
         Operation op = Operation.valueOf(operation.toUpperCase());
-        boolean isResourceAllowed = !deniedOperations.containsKey(resource) || !deniedOperations.get(resource).contains(op);
-        boolean areAllResourcesAllowed = !deniedOperations.get("*").contains(op);
-        return isResourceAllowed && areAllResourcesAllowed;
+        if (deniedOperations.containsKey(resource)) return !deniedOperations.get(resource).contains(op);
+        return  !deniedOperations.get("*").contains(op);
     }
 
     public String allowedPermissions(String resource){
         EnumSet<Operation> allowed = EnumSet.allOf(Operation.class);
         EnumSet<Operation> denied = EnumSet.noneOf(Operation.class);
 
-        denied.addAll(deniedOperations.get("*"));
         if (deniedOperations.containsKey(resource)){
             denied.addAll(deniedOperations.get(resource));
+        }else {
+            denied.addAll(deniedOperations.get("*"));
         }
 
         allowed.removeAll(denied);
