@@ -2,9 +2,11 @@ import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Stream;
 
 public class PermissionHandler {
     private Map<String, EnumSet<Operation>> deniedOperations;
+    private Map<String, EnumSet<Operation>> allowedOperations;
 
     public PermissionHandler() {
         clearPermissions();
@@ -36,30 +38,19 @@ public class PermissionHandler {
     }
 
     private void allowPermission(String resource, String operation){
-        if (resource.equals("*")){
-            if (operation.equals("*")) {
-                clearPermissions();
-                return;
-            }
-            Operation op = Operation.valueOf(operation.toUpperCase());
-            deniedOperations.forEach((key, set) -> set.remove(op));
-            return;
-        }
-
+        EnumSet<Operation> toAdd = EnumSet.noneOf(Operation.class);
         if (operation.equals("*")){
-            deniedOperations.get(resource).clear();
-            return;
+            toAdd.addAll(EnumSet.allOf(Operation.class));
+        } else {
+            toAdd.add(Operation.valueOf(operation.toUpperCase()));
         }
 
-        Operation op = Operation.valueOf(operation.toUpperCase());
-        if (deniedOperations.containsKey(resource)){
-            deniedOperations.get(resource).remove(op);
+        if(!allowedOperations.containsKey(resource)){
+            allowedOperations.put(resource, toAdd);
+
         }else {
-            EnumSet<Operation> key = EnumSet.copyOf(deniedOperations.get("*"));
-            key.remove(op);
-            deniedOperations.put(resource, key);
+            allowedOperations.get(resource).addAll(toAdd);
         }
-
     }
 
     private void denyPermission(String resource, String operation){
@@ -70,39 +61,46 @@ public class PermissionHandler {
             toAdd.add(Operation.valueOf(operation.toUpperCase()));
         }
 
-        if(resource.equals("*")){
-            deniedOperations.forEach((key, set) -> set.addAll(toAdd));
-            return;
-        }
+        if(!deniedOperations.containsKey(resource)){
+            deniedOperations.put(resource, toAdd);
 
-        if (deniedOperations.containsKey(resource)) {
+        }else {
             deniedOperations.get(resource).addAll(toAdd);
-            return;
         }
-
-        toAdd.addAll(deniedOperations.get("*"));
-        deniedOperations.put(resource, toAdd);
     }
 
     private void clearPermissions() {
         this.deniedOperations = new HashMap<>();
         deniedOperations.put("*", EnumSet.noneOf(Operation.class));
+
+        this.allowedOperations = new HashMap<>();
+        allowedOperations.put("*", EnumSet.noneOf(Operation.class));
     }
 
     public boolean isAllowed(String resource, String operation){
         Operation op = Operation.valueOf(operation.toUpperCase());
-        if (deniedOperations.containsKey(resource)) return !deniedOperations.get(resource).contains(op);
-        return  !deniedOperations.get("*").contains(op);
+        boolean isOperationAllowed = allowedOperations.get("*").contains(op);
+        boolean isOperationDenied = deniedOperations.get("*").contains(op);
+        if (allowedOperations.containsKey(resource)){
+            isOperationAllowed = isOperationAllowed || allowedOperations.get(resource).contains(op);
+        }
+
+        if (deniedOperations.containsKey(resource)){
+            isOperationDenied = isOperationDenied || deniedOperations.get("*").contains(op);
+        }
+        return isOperationAllowed && !isOperationDenied;
     }
 
     public String allowedPermissions(String resource){
-        EnumSet<Operation> allowed = EnumSet.allOf(Operation.class);
-        EnumSet<Operation> denied = EnumSet.noneOf(Operation.class);
+        EnumSet<Operation> allowed = allowedOperations.get("*").clone();
+        EnumSet<Operation> denied = deniedOperations.get("*").clone();
 
         if (deniedOperations.containsKey(resource)){
             denied.addAll(deniedOperations.get(resource));
-        }else {
-            denied.addAll(deniedOperations.get("*"));
+        }
+
+        if (allowedOperations.containsKey(resource)){
+            allowed.addAll(allowedOperations.get(resource));
         }
 
         allowed.removeAll(denied);

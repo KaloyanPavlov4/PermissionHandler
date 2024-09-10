@@ -5,7 +5,7 @@ import java.util.Scanner;
 public class Main {
     public static void main(String[] args) {
             PermissionHandler permissionHandler = new PermissionHandler();
-            List<String> commands = List.of("*:*", "*:create:deny", "*:update:deny", "*:delete:deny", "Secret:read:deny");
+            List<String> commands = List.of("*:*", "Secret:read", "Secret:read:deny");
             permissionHandler.handleCommands(commands);
 
             Scanner scanner = new Scanner(System.in);
