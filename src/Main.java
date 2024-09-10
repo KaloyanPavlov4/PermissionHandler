@@ -5,19 +5,10 @@ import java.util.Scanner;
 public class Main {
     public static void main(String[] args) {
             PermissionHandler permissionHandler = new PermissionHandler();
-            List<String> commands = new LinkedList<>();
+            List<String> commands = List.of("*:*", "*:create:deny", "*:update:deny", "*:delete:deny", "Secret:read:deny");
+            permissionHandler.handleCommands(commands);
+
             Scanner scanner = new Scanner(System.in);
-
-            String command = scanner.nextLine();
-            while (!command.equalsIgnoreCase("END")){
-                commands.add(command);
-                command = scanner.nextLine();
-            }
-
-            for (String c : commands){
-                permissionHandler.handleCommand(c);
-            }
-
             while (true) {
                 System.out.println("1.See allowed operations\n2.Check permission on operation");
                 String input = scanner.nextLine();

@@ -1,5 +1,6 @@
 import java.util.EnumSet;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class PermissionHandler {
@@ -25,6 +26,12 @@ public class PermissionHandler {
         //Allow
         else {
             allowPermission(commandParts[0], commandParts[1]);
+        }
+    }
+
+    public void handleCommands(List<String> commands){
+        for(String command : commands){
+            handleCommand(command);
         }
     }
 
@@ -65,6 +72,7 @@ public class PermissionHandler {
 
         if(resource.equals("*")){
             deniedOperations.forEach((key, set) -> set.addAll(toAdd));
+            return;
         }
 
         if (deniedOperations.containsKey(resource)) {
@@ -72,6 +80,7 @@ public class PermissionHandler {
             return;
         }
 
+        toAdd.addAll(deniedOperations.get("*"));
         deniedOperations.put(resource, toAdd);
     }
 
